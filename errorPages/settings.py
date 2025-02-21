@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-t7bo@zb(@a808$gro#qg0%8ah#l(3m+4*%@hj1dc93gfyh*ck7
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '127.0.0.1', 'localhost',
+    '*',
 ]
 
 
@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app',
     'users',
+    'productos',
+    'categorias',
     # 'widget_tweaks',
 ]
 
