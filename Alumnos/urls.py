@@ -1,11 +1,11 @@
-# urls.py
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import AlumnoViewSet
+from rest_framework.routers import SimpleRouter
+from .views import AlumnoViewSet, gestionAlumnos
 
-router = DefaultRouter()
-router.register(r'api', AlumnoViewSet)
+router = SimpleRouter()
+router.register(r'api', AlumnoViewSet) 
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', include(router.urls)),  
+    path('registrar/', gestionAlumnos, name='gestionar_alumnos'),  # Página para gestionar los alumnos
 ]

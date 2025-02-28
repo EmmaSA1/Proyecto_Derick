@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agregar Alumnos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+  <div class="container mt-4">
+    <div class="row">
+      <!-- Formulario de agregar alumno -->
+      <div class="col-md-6">
+        <h2>Agregar Alumnos</h2>
+        <form id="alumnosForm">
+          <input type="hidden" id="id_alumno">
+          <div class="mb-3">
+            <label for="id_nombre" class="form-label">Nombre:</label>
+            <input type="text" id="id_nombre" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_apellido" class="form-label">Apellido:</label>
+            <input type="text" id="id_apellido" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_edad" class="form-label">Edad:</label>
+            <input type="number" id="id_edad" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_matricula" class="form-label">Matrícula:</label>
+            <input type="text" id="id_matricula" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_correo" class="form-label">Correo:</label>
+            <input type="email" id="id_correo" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Agregar Alumno</button>
+        </form>
+        <p id="mensaje" class="mt-3"></p>
+      </div>
+
+      <!-- Tabla de alumnos -->
+      <div class="col-md-6">
+        <h2>Ver Alumnos</h2>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>Edad</th>
+              <th>Matrícula</th>
+              <th>Correo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="alumnos">
+            <!-- Aquí se insertarán los alumnos dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function actualizarAlumno(alumnoString) {
+      let alumno = JSON.parse(decodeURIComponent(alumnoString));
+      document.getElementById("id_alumno").value = alumno.id;
+      document.getElementById("id_nombre").value = alumno.nombre;
+      document.getElementById("id_apellido").value = alumno.apellido;
+      document.getElementById("id_edad").value = alumno.edad;
+      document.getElementById("id_matricula").value = alumno.matricula;
+      document.getElementById("id_correo").value = alumno.correo;
+    }
+
+    function eliminarAlumno(id) {
+      Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`http://127.0.0.1:8000/alumnos/api/${id}/`, { method: "DELETE" })
+            .then(response => {
+              if (!response.ok) throw new Error(`Error: ${response.status}`);
+              return response.status === 204 ? null : response.json();
+            })
+            .then(() => {
+              Swal.fire("Eliminado", "El alumno ha sido eliminado.", "success");
+              obtenerAlumnos();
+            })
+            .catch(() => {
+              Swal.fire("Error", "No se pudo eliminar el alumno.", "error");
+            });
+        }
+      });
+    }
+
+
+
+    function obtenerAlumnos() {
+      fetch("http://127.0.0.1:8000/alumnos/api/")
+        .then(response => response.json())
+        .then(data => {
+          let alumnosTabla = document.getElementById("alumnos");
+          alumnosTabla.innerHTML = "";
+          data.forEach(alumno => {
+            alumnosTabla.innerHTML += `
+                            <tr>
+                                <td>${alumno.nombre}</td>
+                                <td>${alumno.apellido}</td>
+                                <td>${alumno.edad}</td>
+                                <td>${alumno.matricula}</td>
+                                <td>${alumno.correo}</td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarAlumno(${alumno.id})">Eliminar</button>
+                                    <button class="btn btn-warning btn-sm" onclick="actualizarAlumno('${encodeURIComponent(JSON.stringify(alumno))}')">Editar</button>
+                                </td>
+                            </tr>
+                        `;
+          });
+        })
+        .catch(() => console.error("Error al obtener los alumnos"));
+    }
+
+    document.getElementById("alumnosForm").addEventListener("submit", function (event) {
+      event.preventDefault();
+      let formData = {
+        nombre: document.getElementById("id_nombre").value,
+        apellido: document.getElementById("id_apellido").value,
+        edad: document.getElementById("id_edad").value,
+        matricula: document.getElementById("id_matricula").value,
+        correo: document.getElementById("id_correo").value,
+      };
+
+      let id = document.getElementById("id_alumno").value;
+      let method = id ? "PUT" : "POST";
+      let url = id ? `http://127.0.0.1:8000/alumnos/api/${id}/` : "http://127.0.0.1:8000/alumnos/api/";
+
+      fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+        .then(response => response.json())
+        .then(() => {
+          document.getElementById("mensaje").innerText = id ? "Alumno actualizado con éxito" : "Alumno agregado con éxito";
+          obtenerAlumnos();
+          document.getElementById("alumnosForm").reset();
+          document.getElementById("id_alumno").value = "";
+        })
+        .catch(() => console.error("Error al procesar la solicitud"));
+    });
+
+    obtenerAlumnos();
+  </script>
+
+</body>
+
+</html>
